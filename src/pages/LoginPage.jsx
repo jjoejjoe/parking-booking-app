@@ -1,6 +1,15 @@
 import { Button, Card, Col, Container, Form, Modal, Row } from "react-bootstrap";
 import logo from '../images/p_logo.png';
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../components/AuthProvider";
+import {
+    GoogleAuthProvider,
+    createUserWithEmailAndPassword,
+    getAuth,
+    signInWithEmailAndPassword,
+    signInWithPopup
+} from "firebase/auth";
 
 export default function Login() {
     const [modalShow, setModalShow] = useState(null);
@@ -8,12 +17,23 @@ export default function Login() {
     const handleShowLogin = () => setModalShow("Login");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+    const auth = getAuth();
+    const { currentUser } = useContext(AuthContext);
+
+    useEffect(() => {
+        if (currentUser) navigate("/profile");
+    }, [currentUser, navigate]);
 
     const handleSignUp = async (e) => {
         e.preventDefault();
         try {
-            const res = await ({ username, password });
-            console.log(res.data);
+            const res = await createUserWithEmailAndPassword(
+                auth,
+                username,
+                password
+            );
+            console.log(res.user);
         } catch (error) {
             console.error(error);
         }
@@ -22,12 +42,21 @@ export default function Login() {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await ({ username, password });
-            console.log(res.data);
+            await signInWithEmailAndPassword(auth, username, password);
         } catch (error) {
             console.error(error);
         }
     };
+
+    const provider = new GoogleAuthProvider();
+    const handleGoogleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
     const handleClose = () => setModalShow(null);
 
@@ -43,11 +72,8 @@ export default function Login() {
                                     <p className="my-3" style={{ fontSize: '30px', color: '#333' }}>You need to sign in or create an account to continue.</p>
                                 </div>
                                 <div className="d-flex flex-column align-items-end">
-                                    <Button className="rounded-pill my-3 mx-3" variant="outline-dark" style={{ width: '250px' }}>
+                                    <Button className="rounded-pill my-3 mx-3" variant="outline-dark" style={{ width: '250px' }} onClick={handleGoogleLogin}>
                                         <i className="bi bi-google"></i> Sign in with Google
-                                    </Button>
-                                    <Button className="rounded-pill mb-3 mx-3" variant="outline-dark" style={{ width: '250px' }}>
-                                        <i className="bi bi-apple"></i> Sign in with Apple
                                     </Button>
                                     <Button className="rounded-pill mb-3 mx-3" variant="outline-dark" style={{ width: '250px' }} onClick={handleShowLogin}>
                                         Sign in with Email
